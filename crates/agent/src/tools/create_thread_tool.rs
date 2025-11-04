@@ -54,7 +54,7 @@ impl AgentTool for CreateThreadTool {
     }
 
     fn kind() -> ToolKind {
-        ToolKind::Create
+        ToolKind::Other
     }
 
     fn initial_title(
@@ -76,7 +76,7 @@ impl AgentTool for CreateThreadTool {
         _event_stream: ToolCallEventStream,
         cx: &mut App,
     ) -> Task<Result<Self::Output>> {
-        let thread_task = cx.spawn(|cx| async move {
+        let thread_task = cx.spawn(|mut cx: &mut App| async move {
             let thread = cx.new(|cx| {
                 Thread::new(
                     self.project.clone(),
