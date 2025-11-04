@@ -1,25 +1,45 @@
-name: Build macOS App
+name: Build Zed (Debug)
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+  pull_request:
 
 jobs:
   build:
     runs-on: macos-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Build project
-        run: cargo build --release
-
-      - name: Upload build output
-        uses: actions/upload-artifact@v4
+      - name: Set up Rust
+        uses: actions/setup-rust@v1
         with:
-          name: build-output
-          path: target/release/
+          rust-version: stable
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: cargo-registry-
+
+      - name: Cache Cargo build (Debug)
+        uses: actions/cache@v3
+        with:
+          path: target/debug
+          key: cargo-build-debug-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: cargo-build-debug-
+
+      - name: Build in debug mode
+        run: cargo build
+
+      - name: Upload debug binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: zed-debug-binary
+          path: target/debug/zed
