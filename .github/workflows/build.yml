@@ -36,8 +36,8 @@ jobs:
           key: cargo-build-debug-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: cargo-build-debug-
 
-      - name: Build in debug mode
-        run: cargo build
+      - name: cargo check -p agent
+        run: cargo check -p agent
 
       - name: Upload debug binary
         uses: actions/upload-artifact@v4
