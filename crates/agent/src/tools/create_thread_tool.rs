@@ -79,15 +79,15 @@ impl AgentTool for CreateThreadTool {
     ) -> Task<Result<Self::Output>> {
         let thread_task = cx.spawn(|mut cx: &mut App| async move {
             let thread = cx.new(|cx| {
-                Thread::new(
-                    self.project.clone(),
-                    self.project_context.clone(),
-                    self.context_server_registry.clone(),
-                    self.templates.clone(),
-                    None, // No model specified, will use default
-                    cx,
-                )
-            })?;
+               Thread::new(
+                   self.project.clone(),
+                   self.project_context.clone(),
+                   self.context_server_registry.clone(),
+                   self.templates.clone(),
+                   None, // No model specified, will use default
+                   cx,
+               )
+            });
             
             // Set the title if provided
             if let Some(title) = input.title {
