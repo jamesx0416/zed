@@ -1,7 +1,8 @@
 use crate::{AgentTool, ContextServerRegistry, Templates, Thread, ToolCallEventStream};
 use agent_client_protocol::ToolKind;
-use anyhow::{Context as _, Result};
+use anyhow::Result;
 use gpui::{App, Entity, Task};
+use gpui::AppContext;
 use project::Project;
 use prompt_store::ProjectContext;
 use schemars::JsonSchema;
