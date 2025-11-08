@@ -1,28 +1,28 @@
+use std::sync::Arc;
+
 use crate::{AgentTool, ContextServerRegistry, Templates, Thread, ToolCallEventStream};
-use agent_client_protocol::ToolKind;
+use agent_client_protocol as acp;
 use anyhow::Result;
-use gpui::{App, Entity, Task};
-use gpui::AppContext;
+use gpui::{App, Entity, SharedString, Task};
 use project::Project;
 use prompt_store::ProjectContext;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 
-/// Creates a new agent thread with the current project context.
+/// Create a new assistant thread associated with the current project.
 ///
-/// This tool allows agents to create new threads programmatically,
-/// enabling them to organize their work or spawn sub-tasks.
+/// Use this when you want to:
+/// - Start a fresh conversation separate from the current thread
+/// - Organize work into sub-threads (for example, per-task or per-file)
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct CreateThreadToolInput {
     /// Optional title for the new thread.
     ///
-    /// <example>
-    /// To create a thread titled "Code Review", provide a title of "Code Review"
-    /// </example>
+    /// If omitted, a default title will be used.
     pub title: Option<String>,
 }
 
+/// Tool that creates a new [`Thread`](crate::Thread) for the current project.
 pub struct CreateThreadTool {
     project: Entity<Project>,
     project_context: Entity<ProjectContext>,
@@ -54,21 +54,23 @@ impl AgentTool for CreateThreadTool {
         "create_thread"
     }
 
-    fn kind() -> ToolKind {
-        ToolKind::Other
+    fn kind() -> acp::ToolKind {
+        acp::ToolKind::Other
     }
 
     fn initial_title(
         &self,
         input: Result<Self::Input, serde_json::Value>,
         _cx: &mut App,
-    ) -> ui::SharedString {
-        if let Ok(input) = input {
-            if let Some(title) = input.title {
-                return format!("Create Thread: {}", title).into();
-            }
+    ) -> SharedString {
+        if let Ok(CreateThreadToolInput {
+            title: Some(title),
+        }) = input
+        {
+            format!("Create thread: {title}").into()
+        } else {
+            "Create thread".into()
         }
-        "Create Thread".into()
     }
 
     fn run(
@@ -77,28 +79,30 @@ impl AgentTool for CreateThreadTool {
         _event_stream: ToolCallEventStream,
         cx: &mut App,
     ) -> Task<Result<Self::Output>> {
-let thread_task = cx.spawn(|cx| async move {
-            let thread = cx.new(|cx| {
-               Thread::new(
-                   self.project.clone(),
-                   self.project_context.clone(),
-                   self.context_server_registry.clone(),
-                   self.templates.clone(),
-                   None, // No model specified, will use default
-                   cx,
-               )
-            });
-            
-            // Set the title if provided
-            if let Some(title) = input.title {
-                thread.update(cx, |thread, cx| {
-                    thread.set_title(title.into(), cx);
+        let title = input.title;
+        cx.spawn({
+            let this = Arc::clone(&self);
+            async move |cx| {
+                let thread = cx.new(|cx| {
+                    Thread::new(
+                        this.project.clone(),
+                        this.project_context.clone(),
+                        this.context_server_registry.clone(),
+                        this.templates.clone(),
+                        None,
+                        cx,
+                    )
                 })?;
-            }
-            
-            Ok(thread.entity_id().to_string())
-        });
 
-        thread_task
+                if let Some(title) = title {
+                    thread.update(cx, |thread, cx| {
+                        thread.set_title(title.into(), cx);
+                        Ok(())
+                    })?;
+                }
+
+                Ok(thread.entity_id().to_string())
+            }
+        })
     }
 }
