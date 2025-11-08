@@ -92,7 +92,7 @@ impl AgentTool for CreateThreadTool {
                         None,
                         cx,
                     )
-                })?;
+                });
 
                 if let Some(title) = title {
                     thread.update(cx, |thread, cx| {
