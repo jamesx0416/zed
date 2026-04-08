@@ -26,11 +26,11 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Build Zed
-        run: cargo build -p zed
+        run: cargo build -p zed --release
 
       - name: Upload Zed binary
         uses: actions/upload-artifact@v4
         with:
-          name: zed-macos-debug-binary
-          path: target/debug/zed
+          name: zed-macos-release-binary
+          path: target/release/zed
           if-no-files-found: error
