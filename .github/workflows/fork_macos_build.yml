@@ -1,0 +1,36 @@
+name: Fork macOS build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - on-last-tab-closed-if-no-project
+      - ci/run-bundling-current-ref
+  pull_request:
+
+jobs:
+  build_macos:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.94.1
+
+      - name: Cache Rust build artifacts
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build Zed
+        run: cargo build -p zed
+
+      - name: Upload Zed binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: zed-macos-debug-binary
+          path: target/debug/zed
+          if-no-files-found: error
