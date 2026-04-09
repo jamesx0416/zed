@@ -80,7 +80,7 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
 }
 
 fn general_page() -> SettingsPage {
-    fn general_settings_section() -> [SettingsPageItem; 8] {
+    fn general_settings_section() -> [SettingsPageItem; 9] {
         [
             SettingsPageItem::SectionHeader("General Settings"),
             SettingsPageItem::SettingItem(SettingItem {
@@ -120,6 +120,26 @@ fn general_page() -> SettingsPage {
                     },
                     write: |settings_content, value| {
                         settings_content.workspace.when_closing_with_no_tabs = value;
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: "Close Window When Last Tab Is Closed If No Project",
+                description: "Whether closing the last tab should also close the window when no project is open.",
+                field: Box::new(SettingField {
+                    json_path: Some("on_last_tab_closed_if_no_project"),
+                    pick: |settings_content| {
+                        settings_content
+                            .workspace
+                            .on_last_tab_closed_if_no_project
+                            .as_ref()
+                    },
+                    write: |settings_content, value| {
+                        settings_content
+                            .workspace
+                            .on_last_tab_closed_if_no_project = value;
                     },
                 }),
                 metadata: None,
